@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Simple Drawing App</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #f0f0f0;
+    }
+
+    h1 {
+      margin: 20px 0 10px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+
+    canvas {
+      border: 2px solid #000;
+      background: #fff;
+      touch-action: none;
+    }
+
+    button, input[type="range"], input[type="color"] {
+      padding: 5px;
+      font-size: 16px;
+    }
+
+    button.active {
+      background-color: #ddd;
+    }
+  </style>
+</head>
+<body>
+  <h1>Simple Drawing App</h1>
+  <div class="controls">
+    <input type="color" id="colorPicker" value="#000000" />
+    <input type="range" id="sizePicker" min="1" max="30" value="5" />
+    <button id="eraserBtn">Eraser</button>
+    <button onclick="clearCanvas()">Clear</button>
+    <button onclick="downloadCanvas()">Download</button>
+  </div>
+  <canvas id="canvas" width="800" height="600"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const colorPicker = document.getElementById('colorPicker');
+    const sizePicker = document.getElementById('sizePicker');
+    const eraserBtn = document.getElementById('eraserBtn');
+
+    let drawing = false;
+    let erasing = false;
+
+    function getPointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.touches ? e.touches[0].clientX : e.clientX) - rect.left,
+        y: (e.touches ? e.touches[0].clientY : e.clientY) - rect.top
+      };
+    }
+
+    function startDrawing(e) {
+      drawing = true;
+      const pos = getPointerPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
+
+    function draw(e) {
+      if (!drawing) return;
+      const pos = getPointerPos(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.strokeStyle = erasing ? '#ffffff' : colorPicker.value;
+      ctx.lineWidth = sizePicker.value;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+    }
+
+    function stopDrawing() {
+      drawing = false;
+      ctx.closePath();
+    }
+
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function downloadCanvas() {
+      const link = document.createElement('a');
+      link.download = 'drawing.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+
+    function toggleEraser() {
+      erasing = !erasing;
+      eraserBtn.classList.toggle('active', erasing);
+    }
+
+    // Mouse events
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
+
+    // Touch events
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      startDrawing(e);
+    });
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      draw(e);
+    });
+    canvas.addEventListener('touchend', stopDrawing);
+    canvas.addEventListener('touchcancel', stopDrawing);
+
+    eraserBtn.addEventListener('click', toggleEraser);
+  </script>
+</body>
+</html>
